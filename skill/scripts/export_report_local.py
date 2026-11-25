@@ -14,6 +14,10 @@ import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
+from reportlab.lib.colors import HexColor
+from pypdf import PdfReader, PdfWriter
+from io import BytesIO
+from reportlab.pdfgen import canvas as canvas_mod
 
 SOURCE_MD = sys.argv[1] if len(sys.argv) > 1 else ""
 DEST_PDF = sys.argv[2] if len(sys.argv) > 2 else ""
@@ -82,7 +86,7 @@ def soffice_to_pdf(docx_path, out_dir):
 
 def build_docx_python(src_md, dst_docx):
     from docx import Document
-    from docx.shared import Pt, Inches
+    from docx.shared import Pt, Inches, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
@@ -102,21 +106,177 @@ def build_docx_python(src_md, dst_docx):
     style.font.size = Pt(11)
 
     def _table_save(table, headers, body, ncols):
+        from docx.oxml.ns import qn as _qn
         table.style = "Light List Accent 1"
         for i, h in enumerate(headers):
             cell = table.cell(0, i)
-            cell.text = _md_to_text_plain(h)
-            for p in cell.paragraphs:
-                for run in p.runs:
-                    run.font.size = Pt(9)
-                    run.font.bold = True
+            cell.text = ""
+            p = cell.paragraphs[0]
+            run = p.add_run(_md_to_text_plain(h))
+            run.font.size = Pt(9)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            _shade_cell(cell._element, "1B4F72")
         for r_idx, row in enumerate(body):
             for c_idx in range(0, min(ncols, len(row))):
                 cell = table.cell(r_idx + 1, c_idx)
-                cell.text = _md_to_text_plain(row[c_idx])
-                for p in cell.paragraphs:
-                    for run in p.runs:
-                        run.font.size = Pt(9)
+                cell.text = ""
+                p = cell.paragraphs[0]
+                run = p.add_run(_md_to_text_plain(row[c_idx]))
+                run.font.size = Pt(9)
+                if r_idx % 2 == 1:
+                    _shade_cell(cell._element, "F7F9FC")
+        _adjust_table_borders(table)
+
+    def _shade_cell(cell_elem, color_hex):
+        tcPr = cell_elem.find(qn('w:tcPr'))
+        if tcPr is None:
+            tcPr = OxmlElement('w:tcPr')
+            cell_elem.insert(0, tcPr)
+        shd = tcPr.find(qn('w:shd'))
+        if shd is None:
+            shd = OxmlElement('w:shd')
+            tcPr.append(shd)
+        shd.set(qn('w:val'), 'clear')
+        shd.set(qn('w:color'), 'auto')
+        shd.set(qn('w:fill'), color_hex)
+
+    def _adjust_table_borders(table):
+        tbl = table._element
+        tblPr = tbl.find(qn('w:tblPr'))
+        if tblPr is None:
+            tblPr = OxmlElement('w:tblPr')
+            tbl.insert(0, tblPr)
+        tblBorders = tblPr.find(qn('w:tblBorders'))
+        if tblBorders is not None:
+            tblPr.remove(tblBorders)
+        tblBorders = OxmlElement('w:tblBorders')
+        for edge in ('top', 'bottom', 'insideH', 'insideV', 'left', 'right'):
+            border = OxmlElement(f'w:{edge}')
+            if edge in ('top', 'bottom'):
+                border.set(qn('w:val'), 'single')
+                border.set(qn('w:sz'), '12')
+                border.set(qn('w:space'), '0')
+                border.set(qn('w:color'), '1B4F72')
+            elif edge == 'insideH':
+                border.set(qn('w:val'), 'single')
+                border.set(qn('w:sz'), '6')
+                border.set(qn('w:space'), '0')
+                border.set(qn('w:color'), 'D5DCE4')
+            else:
+                border.set(qn('w:val'), 'nil')
+            tblBorders.append(border)
+        tblPr.append(tblBorders)
+        tblCellMar = OxmlElement('w:tblCellMar')
+        for edge in ('top', 'bottom', 'left', 'right'):
+            margin = OxmlElement(f'w:{edge}')
+            if edge in ('top', 'bottom'):
+                margin.set(qn('w:w'), '9')
+                margin.set(qn('w:type'), 'dxa')
+            else:
+                margin.set(qn('w:w'), '10')
+                margin.set(qn('w:type'), 'dxa')
+            tblCellMar.append(margin)
+        tblPr.append(tblCellMar)
+
+    def get_md_bold_sub_runs(text):
+        runs = []
+        parts = re.split(r"(\*\*[^*]+\*\*)", text)
+        for p in parts:
+            if p.startswith("**") and p.endswith("**") and len(p) >= 4:
+                inner = p[2:-2]
+                runs.append((inner, True))
+            else:
+                runs.append((p, False))
+        return runs
+
+    def escape_xml(s):
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def get_or_add_pPr(p_elem):
+        pPr = p_elem.find(qn('w:pPr'))
+        if pPr is None:
+            pPr = OxmlElement('w:pPr')
+            p_elem.insert(0, pPr)
+        return pPr
+
+    def _adjust_summary_box(pPr):
+        shd = pPr.find(qn('w:shd'))
+        if shd is None:
+            shd = OxmlElement('w:shd')
+            shd.set(qn('w:val'), 'clear')
+            shd.set(qn('w:color'), 'auto')
+            shd.set(qn('w:fill'), 'F2F6FA')
+            pPr.append(shd)
+        pBdr = pPr.find(qn('w:pBdr'))
+        if pBdr is None:
+            pBdr = OxmlElement('w:pBdr')
+            pPr.append(pBdr)
+        left = pBdr.find(qn('w:left'))
+        if left is None:
+            left = OxmlElement('w:left')
+            pBdr.append(left)
+        left.set(qn('w:val'), 'single')
+        left.set(qn('w:sz'), '24')
+        left.set(qn('w:space'), '4')
+        left.set(qn('w:color'), '1B4F72')
+
+    in_summary = False
+
+    def add_md_line(text):
+        text = text.rstrip("\n")
+        if not text:
+            return
+        if text.lstrip().startswith("#"):
+            level = min(6, len(text) - len(text.lstrip("#")))
+            color_map = {1: RGBColor(0x16, 0x3A, 0x5F), 2: RGBColor(0x1B, 0x4F, 0x72), 3: RGBColor(0x2C, 0x3E, 0x50)}
+            h = doc.add_heading(text.lstrip("# ").strip(), level=level)
+            for run in h.runs:
+                run.font.color.rgb = color_map.get(level, RGBColor(0x1B, 0x4F, 0x72))
+            return
+        if text.startswith("!["):
+            m = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", text.strip())
+            if m:
+                caption, path = m.group(1), m.group(2)
+                full = _resolve_image(path)
+                if os.path.exists(full):
+                    p = doc.add_paragraph()
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run = p.add_run()
+                    run.add_picture(full, width=Inches(4.2))
+                    cap = doc.add_paragraph()
+                    cr = cap.add_run(caption)
+                    cr.italic = True
+                    cr.font.size = Pt(9)
+                    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                else:
+                    p = doc.add_paragraph()
+                    p.add_run(f"[이미지 없음: {path}]").bold = True
+            return
+        if _is_standalone_hr(text):
+            doc.add_paragraph()
+            return
+        p = doc.add_paragraph()
+        if in_summary and re.match(r'^report/report\.md', src_md):
+            p_adj = get_or_add_pPr(p._element)
+            shd = OxmlElement('w:shd')
+            shd.set(qn('w:val'), 'clear')
+            shd.set(qn('w:color'), 'auto')
+            shd.set(qn('w:fill'), 'F2F6FA')
+            p_adj.append(shd)
+            pBdr = OxmlElement('w:pBdr')
+            left = OxmlElement('w:left')
+            left.set(qn('w:val'), 'single')
+            left.set(qn('w:sz'), '24')
+            left.set(qn('w:space'), '4')
+            left.set(qn('w:color'), '1B4F72')
+            pBdr.append(left)
+            p_adj.append(pBdr)
+        for plain, is_bold in get_md_bold_sub_runs(_md_to_text_plain(text)):
+            run = p.add_run(plain)
+            run.bold = is_bold
+            run.font.size = Pt(11)
+        return p
 
     def _is_md_sep_line(text):
         stripped = text.strip()
@@ -187,39 +347,6 @@ def build_docx_python(src_md, dst_docx):
         if buf:
             _flush_table_buf(buf)
 
-    def add_md_line(text):
-        text = text.rstrip("\n")
-        if not text:
-            return
-        if text.lstrip().startswith("#"):
-            level = min(6, len(text) - len(text.lstrip("#")))
-            doc.add_heading(text.lstrip("# ").strip(), level=level)
-            return
-        if text.startswith("!["):
-            m = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", text.strip())
-            if m:
-                caption, path = m.group(1), m.group(2)
-                full = _resolve_image(path)
-                if os.path.exists(full):
-                    p = doc.add_paragraph()
-                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    run = p.add_run()
-                    run.add_picture(full, width=Inches(4.2))
-                    cap = doc.add_paragraph()
-                    cr = cap.add_run(caption)
-                    cr.italic = True
-                    cr.font.size = Pt(9)
-                    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                else:
-                    p = doc.add_paragraph()
-                    p.add_run(f"[이미지 없음: {path}]").bold = True
-            return
-        if _is_standalone_hr(text):
-            doc.add_paragraph()
-            return
-        p = doc.add_paragraph(_md_to_text_plain(text))
-        return p
-
     with open(src_md, encoding="utf-8") as f:
         _flush_table_buf_in_runs(f)
 
@@ -283,9 +410,65 @@ def _find_kr_font():
     return None, None
 
 
-def build_pdf_reportlab(src_md, dst_pdf):
+def _is_truetype_with_kr(path):
+    if not os.path.exists(path) or not path.lower().endswith(".ttf"):
+        return False
+    try:
+        from fontTools.ttLib import TTFont
+        tt = TTFont(path)
+        if 'glyf' not in tt:
+            return False
+        kr_sample = "아세트아미노펜 p-아미노페놀 아세트산 무수물 디클로로메탄 트리에틸아민"
+        charset = set()
+        for table in tt['cmap'].tables:
+            for cp in table.cmap:
+                charset.add(cp)
+        return all(ord(ch) in charset for ch in kr_sample)
+    except Exception:
+        return False
+
+
+def _find_kr_font():
+    candidates = [
+        "/Library/Fonts/Arial Unicode.ttf",
+        "/Library/Fonts/ArialUnicode.ttf",
+    ]
+    for path in candidates:
+        if _is_truetype_with_kr(path):
+            return path, "ArialUnicode"
+    import glob
+    for name in [
+        "NanumGothic",
+        "NanumBarunGothic",
+        "NanumSquareRound",
+        "NanumSquare",
+        "Noto Sans CJK KR",
+        "NotoSansCJK-Regular",
+        "AppleGothic",
+        "AppleMyungjo",
+        "Batang",
+        "Dotum",
+    ]:
+        for pattern in [
+            f"/Library/Fonts/{name}.ttf",
+            f"/System/Library/Fonts/{name}.ttf",
+            f"/Library/Fonts/{name}*.ttf",
+            f"/System/Library/Fonts/{name}*.ttf",
+            f"/usr/local/share/fonts/{name}.ttf",
+            f"/opt/homebrew/share/fonts/{name}.ttf",
+        ]:
+            matches = glob.glob(pattern)
+            if matches:
+                for m in matches:
+                    if _is_truetype_with_kr(m):
+                        return m, name
+    return None, None
+
+
+def build_pdf_reportlab(src_md, dst_pdf, is_main_report=False):
     from reportlab.lib.pagesizes import A4
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image, Table,
+                                    TableStyle, KeepTogether, HRFlowable)
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib import colors
     from reportlab.lib.units import mm
@@ -306,39 +489,92 @@ def build_pdf_reportlab(src_md, dst_pdf):
     else:
         print("WARNING: 한글 TTF를 찾지 못했습니다; PDF 한글은 깨질 수 있습니다.", file=sys.stderr)
 
-    if not font_registered:
-        print("DEBUG: 등록된 한글 폰트 없음 -> Helvetica로 PDF 생성", file=sys.stderr)
 
-    RESOURCE_DIR = SOURCE_DIR
+def _copy_if_exists(src, dst):
+    if src and os.path.exists(src):
+        shutil.copy(src, dst)
+        return True
+    return False
 
-    styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name="Caption", fontName=font_family, fontSize=9, leading=11, alignment=TA_CENTER))
-    styles.add(ParagraphStyle(name="Cell", fontName=font_family, fontSize=7.5, leading=9.5))
-    styles.add(ParagraphStyle(name="Body", fontName=font_family, fontSize=10.5, leading=14))
-    for lvl in range(1, 7):
-        style_name = "Heading%d" % lvl
-        if style_name in styles:
-            existing = styles[style_name]
-            existing.fontName = font_family
-            existing.fontSize = (18 if lvl == 1 else (14 if lvl == 2 else 12))
-            existing.leading = (20 if lvl == 1 else (16 if lvl == 2 else 14))
-            existing.spaceBefore = (10 if lvl <= 2 else 6)
-            existing.spaceAfter = 6
-        else:
-            existing = None
-            styles.add(ParagraphStyle(
-                name=style_name,
-                fontName=font_family,
-                fontSize=(18 if lvl == 1 else (14 if lvl == 2 else 12)),
-                leading=(20 if lvl == 1 else (16 if lvl == 2 else 14)),
-                spaceBefore=(10 if lvl <= 2 else 6),
-                spaceAfter=6,
-            ))
+
+def build_pdf_reportlab_body(story, src_md, dst_pdf, font_family, font_registered, font_name):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image, Table,
+                                    TableStyle, KeepTogether, HRFlowable)
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.colors import HexColor
+
+    styles = {
+        name: ParagraphStyle(name=name, fontName=font_family, fontSize=sz, leading=ld,
+                             textColor=colors.HexColor("#222222"),
+                             spaceAfter=4)
+        for name, sz, ld in [("Body", 9.8, 15), ("Bullet", 9.8, 15), ("BulletSub", 9.8, 15)]
+    }
+    styles["Body"].spaceAfter = 4
+    styles["Bullet"].leftIndent = 12
+    styles["Bullet"].firstLineIndent = -8
+    styles["Bullet"].spaceAfter = 2.5
+    styles["BulletSub"].leftIndent = 22
+    styles["BulletSub"].spaceAfter = 2.5
+
+    for lvl, sz, ld, color, sb, sa in [
+        (1, 17, 21, colors.HexColor("#163A5F"), 14, 5),
+        (2, 13, 16, colors.HexColor("#1B4F72"), 14, 5),
+        (3, 11, 13, colors.HexColor("#2C3E50"), 6, 6),
+    ]:
+        styles[f"Heading{lvl}"] = ParagraphStyle(
+            name=f"Heading{lvl}",
+            fontName=font_family,
+            fontSize=sz,
+            leading=ld,
+            textColor=color,
+            spaceBefore=sb,
+            spaceAfter=sa,
+            keepWithNext=True,
+        )
+    styles["Caption"] = ParagraphStyle(
+        name="Caption",
+        fontName=font_family,
+        fontSize=9,
+        leading=11,
+        alignment=TA_CENTER,
+    )
+    styles["Cell"] = ParagraphStyle(
+        name="Cell",
+        fontName=font_family,
+        fontSize=7.5,
+        leading=9.5,
+    )
+    styles["SummaryBox"] = ParagraphStyle(
+        name="SummaryBox",
+        fontName=font_family,
+        fontSize=9.8,
+        leading=15,
+        textColor=colors.HexColor("#222222"),
+        backColor=colors.HexColor("#F2F6FA"),
+        borderLeftColor=colors.HexColor("#1B4F72"),
+        borderLeftWidth=3,
+        leftIndent=6,
+        rightIndent=6,
+        spaceAfter=4,
+        spaceBefore=0,
+    )
+
+    def escape_text(text):
+        text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        if not font_registered:
+            text = re.sub(r"\*\*([^*]+)\*\*", r"<font color=\"#163A5F\">\1</font>", text)
+            return text
+        text = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", text)
+        return text
 
     def _cell(text):
         if not text:
             return Paragraph("", styles["Cell"])
-        return Paragraph(_md_to_text_plain_for_pdf(text).replace("\n", "<br/>"), styles["Cell"])
+        return Paragraph(escape_text(text).replace("\n", "<br/>"), styles["Cell"])
 
     def _img_stream(path, width_mm=95):
         full = os.path.normpath(os.path.join(SOURCE_DIR, path))
@@ -380,13 +616,13 @@ def build_pdf_reportlab(src_md, dst_pdf):
                     if table_buf:
                         items.append(("table", table_buf))
                         table_buf = []
-                    items.append(("p", stripped))
+                    add_paragraph_item(stripped, items)
                     continue
             if not stripped:
                 items.append(("spacer", None))
                 continue
             if stripped == "---":
-                items.append(("spacer", None))
+                items.append(("hr", None))
                 continue
             if stripped.startswith("!["):
                 m = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", stripped)
@@ -395,13 +631,17 @@ def build_pdf_reportlab(src_md, dst_pdf):
                 continue
             if stripped.startswith("#"):
                 level = min(6, len(stripped) - len(stripped.lstrip("#")))
-                items.append(("h", (level, stripped.lstrip("# ").strip())))
+                text = stripped.lstrip("# ").strip()
+            if level == 2 and text.strip() == "요약":
+                items.append(("sum", (level, text)))
                 continue
+            items.append(("h", (level, text)))
+            continue
             if stripped.startswith("|"):
                 in_table = True
                 table_buf = [stripped]
                 continue
-            items.append(("p", stripped))
+            add_paragraph_item(stripped, items)
         if in_table and table_buf:
             items.append(("table", table_buf))
         return items
@@ -435,48 +675,148 @@ def build_pdf_reportlab(src_md, dst_pdf):
         body_rows = [r + [""] * (n - len(r)) for r in body_rows]
         return header_rows, body_rows
 
-    story = []
+    def add_paragraph_item(text, items):
+        if not text:
+            return
+        if text.lstrip().startswith("#"):
+            level = min(6, len(text) - len(text.lstrip("#")))
+            items.append(("h", (level, text.lstrip("# ").strip())))
+            if level == 2 and text.strip() == "요약":
+                in_summary = True
+            return
+        if text.startswith("!["):
+            return
+        if text.strip() == "---":
+            items.append(("hr", None))
+            return
+        if text.startswith("|"):
+            return
+        if in_summary:
+            in_summary = False
+        items.append(("p", text))
+
+    in_summary = False
+    heading_after = None
+
     for kind, data in _parse_md(src_md):
         if kind == "h":
-            lvl, text = data
-            style_name = "Heading%d" % lvl
-            if style_name not in styles:
-                style_name = "Heading1"
-            story.append(Paragraph(_md_to_text_plain_for_pdf(text), styles[style_name]))
-        elif kind == "p":
-            story.append(Paragraph(_md_to_text_plain_for_pdf(data), styles["Body"]))
-        elif kind == "spacer":
+            level, text = data
+            style_name = f"Heading{level}"
+            story.append(Paragraph(escape_text(text), styles[style_name]))
+            if level == 2 and text == "요약":
+                in_summary = True
+            continue
+        if kind == "p":
+            story.append(Paragraph(escape_text(data), styles["Body"]))
+            continue
+        if kind == "spacer":
             story.append(Spacer(1, 4*mm))
-        elif kind == "img":
+            continue
+        if kind == "img":
             caption, path = data
-            story.append(_img_stream(path))
-            story.append(Paragraph(_md_to_text_plain_for_pdf(caption), styles["Caption"]))
-            story.append(Spacer(1, 4*mm))
-        elif kind == "table":
+            img_flow = _img_stream(path)
+            cap_flow = Paragraph(escape_text(caption), styles["Caption"])
+            if path.endswith((".png", ".jpg", ".jpeg", ".tiff", ".gif")):
+                if "cpk" in path or "stick" in path:
+                    width_mm = 145
+                elif "_reaction.png" in path or "reaction" in path:
+                    width_mm = 165
+                elif "2d" in path or "structure" in path:
+                    width_mm = 75
+                else:
+                    width_mm = 95
+                img_flow = _img_stream(path, width_mm=width_mm)
+            story.append(KeepTogether([img_flow, cap_flow, Spacer(1, 2*mm)]))
+            continue
+        if kind == "table":
             header_rows, body_rows = _parse_table(data)
             if not header_rows:
                 continue
             table_data = [ [_cell(c) for c in row] for row in (header_rows + body_rows) ]
             ncol = len(header_rows[0])
-            col_widths = [190*mm/ncol]*ncol
+            col_widths = _compute_col_widths(header_rows, body_rows, ncol)
             t = Table(table_data, colWidths=col_widths)
-            t.setStyle(TableStyle([
-                ("FONTNAME", (0,0), (-1,-1), font_family),
-                ("FONTSIZE", (0,0), (-1,-1), 7.5),
-                ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#888888")),
-                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#e6e6e6")),
-                ("VALIGN", (0,0), (-1,-1), "TOP"),
-                ("LEFTPADDING", (0,0), (-1,-1), 3),
-                ("RIGHTPADDING", (0,0), (-1,-1), 3),
-                ("TOPPADDING", (0,0), (-1,-1), 2),
-                ("BOTTOMPADDING", (0,0), (-1,-1), 2),
-            ]))
+            t.setStyle(_table_style_basic())
+            t.repeatRows = 1
             story.append(t)
             story.append(Spacer(1, 4*mm))
+            continue
+        if kind == "hr":
+            story.append(HRFlowable(width="40%", thickness=0.6, color=HexColor("#D5DCE4"),
+                                    spaceBefore=6, spaceAfter=6, hAlign='CENTER'))
+            continue
 
-    doc = SimpleDocTemplate(dst_pdf, pagesize=A4, rightMargin=12*mm, leftMargin=12*mm,
-                             topMargin=12*mm, bottomMargin=12*mm)
+    doc = SimpleDocTemplate(dst_pdf, pagesize=A4,
+                             rightMargin=18*mm, leftMargin=18*mm,
+                             topMargin=18*mm, bottomMargin=18*mm)
     doc.build(story)
+
+    def _add_page_numbers(pdf_path):
+        from pypdf import PdfReader, PdfWriter
+        from io import BytesIO
+        from reportlab.pdfgen import canvas as canvas_mod
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import mm
+        from reportlab.lib.colors import HexColor
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        for i, page in enumerate(reader.pages):
+            writer.add_page(page)
+            packet = BytesIO()
+            can = canvas_mod.Canvas(packet, pagesize=A4)
+            can.setFont(font_family, 8.5)
+            can.setFillColor(HexColor("#888888"))
+            page_num = f"- {i+1} / {len(reader.pages)} -"
+            can.drawCentredString(A4[0] / 2, 12 * mm, page_num)
+            can.save()
+            packet.seek(0)
+            overlay = PdfReader(packet)
+            writer.pages[i].merge_page(overlay.pages[0])
+        with open(pdf_path, "wb") as f:
+            writer.write(f)
+
+    def _compute_col_widths(header_rows, body_rows, ncol, available_mm=150, min_mm=12):
+        max_len = [0] * ncol
+        for row in header_rows + body_rows:
+            for i, cell in enumerate(row):
+                clean = escape_text(cell).replace("<br/>", " ")
+                max_len[i] = max(max_len[i], len(clean))
+        total = sum(max_len)
+        if total == 0:
+            w = available_mm / ncol
+            return [w * mm] * ncol
+        widths = [max(min_mm, (w / total) * available_mm) for w in max_len]
+        sum_w = sum(widths)
+        if sum_w > available_mm:
+            ratio = available_mm / sum_w
+            widths = [w * ratio for w in widths]
+        elif sum_w < available_mm:
+            extra = available_mm - sum_w
+            widths = [w + extra / ncol for w in widths]
+        return [w * mm for w in widths]
+
+    def _table_style_basic():
+        return TableStyle([
+            ("FONTNAME", (0,0), (-1,-1), font_family),
+            ("FONTSIZE", (0,0), (-1,-1), 7.5),
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#1B4F72")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+            ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#F7F9FC")]),
+            ("VALIGN", (0,0), (-1,-1), "TOP"),
+            ("LEFTPADDING", (0,0), (-1,-1), 5),
+            ("RIGHTPADDING", (0,0), (-1,-1), 5),
+            ("TOPPADDING", (0,0), (-1,-1), 4.5),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 4.5),
+            ("LINEABOVE", (0,0), (-1,0), 0.6, colors.HexColor("#1B4F72")),
+            ("LINEBELOW", (0,0), (-1,0), 0.6, colors.HexColor("#D5DCE4")),
+            ("LINEBELOW", (0,-1), (-1,-1), 0.6, colors.HexColor("#D5DCE4")),
+            ("LINEABOVE", (0,-1), (-1,-1), 0.6, colors.HexColor("#1B4F72")),
+            ("INNERGRID", (0,1), (-1,-1), 0.25, colors.white),
+            ("BOX", (0,0), (-1,-1), 0, colors.white),
+        ])
+
+    if is_main_report:
+        _add_page_numbers(dst_pdf)
 
 
 def _copy_if_exists(src, dst):
@@ -485,6 +825,11 @@ def _copy_if_exists(src, dst):
         return True
     return False
 
+def _copy_if_exists(src, dst):
+    if src and os.path.exists(src):
+        shutil.copy(src, dst)
+        return True
+    return False
 
 def main():
     src_md = SOURCE_MD
@@ -511,7 +856,7 @@ def main():
                 pdf_tmp = soffice_to_pdf(docx_path, work)
                 shutil.copy(pdf_tmp, dst_pdf)
             else:
-                build_pdf_reportlab(src_md, dst_pdf)
+                build_pdf_reportlab(src_md, dst_pdf, is_main_report=(os.path.basename(src_md) == "report.md"))
             _copy_if_exists(docx_path, dst_docx)
         else:
             if pandoc_ok and office_ok:
@@ -520,7 +865,7 @@ def main():
                 pdf_tmp = soffice_to_pdf(docx_path, work)
                 shutil.copy(pdf_tmp, dst_pdf)
             else:
-                build_pdf_reportlab(src_md, dst_pdf)
+                build_pdf_reportlab(src_md, dst_pdf, is_main_report=(os.path.basename(src_md) == "report.md"))
 
         pages = page_count_pdf(dst_pdf)
         print("생성됨: %s (%s쪽; 존재·쪽수 확인 완료)" % (dst_pdf, pages))
