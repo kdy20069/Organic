@@ -1,0 +1,16 @@
+rxn_smiles,top-k,catalyst1,solvent1,solvent2,reagent1,reagent2,scores
+CC(=O)OC(C)=O.Nc1ccc(O)cc1>>CC(=O)Nc1ccc(O)cc1,top-1,,O,,,,-0.8904
+,top-2,,CCO,,,,-2.5844
+,top-3,,CN(C)C=O,,,,-2.8837
+,top-4,,O,,CO,,-4.5317
+,top-5,,CN(C)C=O,,O,,-4.6215
+,top-6,,O,,Cl,,-5.26
+,top-7,,CN(C)C=O,,CCN(CC)CC,,-5.563
+,top-8,,CCO,,O,,-5.6182
+,top-9,CN(C)c1ccncc1,C1CCOC1,,,,-7.2543
+,top-10,CN(C)c1ccncc1,CN(C)C=O,,,,-7.2857
+,top-11,,CCO,,CO,,-7.3626
+,top-12,CN(C)c1ccncc1,ClCCl,,,,-7.4478
+,top-13,CN(C)c1ccncc1,ClCCl,,CCN(CC)CC,,-7.6425
+,top-14,CN(C)c1ccncc1,CN(C)C=O,,CCN(CC)CC,,-7.9412
+,top-15,CN(C)c1ccncc1,C1CCOC1,,CCN(CC)CC,,-8.4149

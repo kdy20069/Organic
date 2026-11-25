@@ -1,0 +1,104 @@
+ *******************************************************************************
+ **                                                                           **
+ **                              MOPAC v23.2.5                                **
+ **                                                                           **
+ *******************************************************************************
+ ** MOPAC's Digital Object Identifier: https://doi.org/10.5281/zenodo.6511958 **
+ **                                                                           **
+ ** Please cite the open-source release paper for use of this MOPAC version:  **
+ ** J. E. Moussa and J. J. P. Stewart (2026)                                  **
+ ** MOPAC: An open-source semiempirical molecular orbital program             **
+ ** J. Open Source Softw., 11(119), 8025, https://doi.org/10.21105/joss.08025 **
+ *******************************************************************************
+
+                              PM7 CALCULATION RESULTS
+
+ *******************************************************************************
+ *  CALCULATION DONE:                                Tue Nov 24 20:35:33 2026  *
+ *  CHARGES    - IDENTIFY AND PRINT CHARGED ATOMS
+ *  T=         - A TIME OF 172800.0 SECONDS REQUESTED
+ *  DUMP=N     - RESTART FILE WRITTEN EVERY 7200.0 SECONDS REQUESTED
+ *******************************************************************************
+CHARGES
+ Acetaminophen CHARGES; 3D geometry from RDKit MMFF94
+ Acetaminophen project; neutral molecule; O-H pKa target
+   ATOM   CHEMICAL          X               Y               Z
+  NUMBER   SYMBOL      (ANGSTROMS)     (ANGSTROMS)     (ANGSTROMS)
+ 
+     1       O          3.86612658  *   0.46443774  *   0.00134546  *
+     2       O         -2.64661367  *   1.37354346  *   0.00429907  *
+     3       N         -1.57933328  *  -0.70613815  *  -0.00172796  *
+     4       C         -0.21290451  *  -0.35706250  *  -0.00094035  *
+     5       C          0.25835506  *   0.95713027  *  -0.02057155  *
+     6       C          0.71550589  *  -1.40856293  *   0.01890737  *
+     7       C          1.63295152  *   1.21646897  *  -0.01938902  *
+     8       C          2.09032277  *  -1.15152993  *   0.02016221  *
+     9       C          2.53725964  *   0.16344597  *   0.00102291  *
+    10       C         -2.66727578  *   0.14834752  *  -0.00927523  *
+    11       C         -3.97775408  *  -0.59932288  *  -0.00393271  *
+    12       H          4.37421213  *  -0.36265236  *   0.01761390  *
+    13       H         -1.78174221  *  -1.69736347  *   0.01260719  *
+    14       H         -0.41564512  *   1.80765964  *  -0.03770925  *
+    15       H          0.38276626  *  -2.44306088  *   0.03396333  *
+    16       H          1.99087456  *   2.24223918  *  -0.03454641  *
+    17       H          2.78742897  *  -1.98300522  *   0.03600555  *
+    18       H         -4.22985129  *  -0.88099009  *   1.02173707  *
+    19       H         -4.76474352  *   0.04408291  *  -0.40792473  *
+    20       H         -3.91932879  *  -1.49535392  *  -0.62859017  *
+ 
+
+
+          CARTESIAN COORDINATES 
+
+    NO.       ATOM           X           Y           Z
+
+     1         O          3.8661      0.4644      0.0013
+     2         O         -2.6466      1.3735      0.0043
+     3         N         -1.5793     -0.7061     -0.0017
+     4         C         -0.2129     -0.3571     -0.0009
+     5         C          0.2584      0.9571     -0.0206
+     6         C          0.7155     -1.4086      0.0189
+     7         C          1.6330      1.2165     -0.0194
+     8         C          2.0903     -1.1515      0.0202
+     9         C          2.5373      0.1634      0.0010
+    10         C         -2.6673      0.1483     -0.0093
+    11         C         -3.9778     -0.5993     -0.0039
+    12         H          4.3742     -0.3627      0.0176
+    13         H         -1.7817     -1.6974      0.0126
+    14         H         -0.4156      1.8077     -0.0377
+    15         H          0.3828     -2.4431      0.0340
+    16         H          1.9909      2.2422     -0.0345
+    17         H          2.7874     -1.9830      0.0360
+    18         H         -4.2299     -0.8810      1.0217
+    19         H         -4.7647      0.0441     -0.4079
+    20         H         -3.9193     -1.4954     -0.6286
+
+ General Reference for PM7:
+ "Optimization of Parameters for Semiempirical Methods VI: More Modifications to the 
+ NDDO Approximations and Re-optimization of Parameters", J. J. P. Stewart, J. Mol. Mod., 1:32, 19 (2013)
+ https://link.springer.com/article/10.1007/s00894-012-1667-x
+
+           Empirical Formula: C8 H9 N O2  =    20 atoms
+
+
+
+      MOLECULAR POINT GROUP   :   C1  
+
+          NO CHARGES FOUND.
+
+          JOB STOPPED HERE BECAUSE KEYWORD "CHARGES" WAS USED
+
+ ******************************************************************************
+ *                                                                            *
+ *     Error and normal termination messages reported in this calculation     *
+ *                                                                            *
+ * JOB STOPPED HERE BECAUSE KEYWORD "CHARGES" WAS USED                        *
+ * JOB ENDED NORMALLY                                                         *
+ *                                                                            *
+ ******************************************************************************
+
+
+
+ TOTAL JOB TIME:             0.00 SECONDS
+
+ == MOPAC DONE ==

@@ -1,0 +1,43 @@
+{
+  "target": "acetaminophen",
+  "target_smiles": "CC(=O)Nc1ccc(O)cc1",
+  "source_route": "../aizynthfinder/routes.json",
+  "steps": [
+    {
+      "step": 1,
+      "direction": "forward",
+      "reaction_class": "amine acylation (acetylation with acid anhydride)",
+      "reactants": [
+        {
+          "name": "acetic anhydride",
+          "smiles": "CC(=O)OC(C)=O"
+        },
+        {
+          "name": "p-aminophenol",
+          "smiles": "Nc1ccc(O)cc1"
+        }
+      ],
+      "products": [
+        {
+          "name": "acetaminophen",
+          "smiles": "CC(=O)Nc1ccc(O)cc1"
+        }
+      ],
+      "reaction_smiles": "CC(=O)OC(C)=O.Nc1ccc(O)cc1>>CC(=O)Nc1ccc(O)cc1",
+      "source": {
+        "file": "../aizynthfinder/routes.json",
+        "selected_tree": "top solved route",
+        "route_node_reaction_smiles": "[CH3:1][C:2](=[O:3])[NH:4][c:5]1[cH:6][cH:7][c:8]([OH:9])[cH:10][cH:11]1>>[CH3:1][C:2](=[O:3])[O:12][C:13]([CH3:14])=[O:15].[NH2:4][c:5]1[cH:6][cH:7][c:8]([OH:9])[cH:10][cH:11]1",
+        "forward_reaction_constructed_by_reversing_retrosynthetic_node": true
+      },
+      "stoichiometric_byproducts": [
+        {
+          "name": "acetic acid",
+          "smiles": "CC(=O)O"
+        }
+      ],
+      "balanced_equation": "CC(=O)OC(C)=O.Nc1ccc(O)cc1>>CC(=O)Nc1ccc(O)cc1.CC(=O)O",
+      "model_input_note": "reaction_smiles follows the AiZynthFinder target-only product node; the balanced_equation additionally records the acetic acid coproduct. No coproduct was added to model inputs."
+    }
+  ]
+}

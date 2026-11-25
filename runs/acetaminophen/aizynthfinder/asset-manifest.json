@@ -1,0 +1,18 @@
+{
+  "data/uspto_model.onnx": {
+    "bytes": 91518243,
+    "sha256": "bd0a3cb74cd7068de474c8fb789a00a66bc42c75636d66510ccac585ebe928f8"
+  },
+  "data/uspto_unique_templates.csv.gz": {
+    "bytes": 3313598,
+    "sha256": "a4f1945e90cfa195538320833d68aed38f14e2fcc2f8afb5d958bc920edcafbe"
+  },
+  "data/uspto_filter_model.onnx": {
+    "bytes": 16788859,
+    "sha256": "ad29aa32bdfcbe37065045546493806cf04899c55386c438905d83fb14bb6320"
+  },
+  "data/zinc_stock.hdf5": {
+    "bytes": 663232280,
+    "sha256": "99d39a6f807c3e815487500bafc2b4a9dc66a31af189e3b1776874fb0d4a188d"
+  }
+}

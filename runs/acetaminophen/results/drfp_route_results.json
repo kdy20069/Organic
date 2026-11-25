@@ -1,0 +1,17 @@
+{
+  "model": "DRFP + yield regression",
+  "checkpoint_path": "../../../skill/drfp/models/buchwald-hartwig-xgb-model.json",
+  "training_reaction_domain": "Buchwald–Hartwig C–N coupling; DRFP + regression trained on Buchwald–Hartwig ELN reaction subset",
+  "steps": [
+    {
+      "step": 1,
+      "reaction_smiles": "CC(=O)OC(C)=O.Nc1ccc(O)cc1>>CC(=O)Nc1ccc(O)cc1",
+      "reaction_class": "acid-anhydride-mediated amine acetylation / amide formation",
+      "in_training_reaction_domain": false,
+      "applicable_as_yield_prediction": false,
+      "prediction_status": "not_run_out_of_domain_per_week_13_procedure",
+      "raw_model_output_percent": null,
+      "reason": "The step uses acetic anhydride and an aromatic amine to form an amide. It has no aryl halide substrate, palladium catalyst, or Buchwald–Hartwig cross-coupling conditions. The week 13 procedure says to predict and interpret yields only inside the learned reaction family."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "model": "AiZynthFinder",
+  "version": "4.4.1",
+  "target_id": "acetaminophen",
+  "target_smiles": "CC(=O)Nc1ccc(O)cc1",
+  "result": "routes.json",
+  "statistics": "stats.json (extracted without alteration from routes.json data[0])",
+  "config": "config-course.yml",
+  "assets": {
+    "data/uspto_model.onnx": {
+      "sha256": "bd0a3cb74cd7068de474c8fb789a00a66bc42c75636d66510ccac585ebe928f8",
+      "bytes": 91518243
+    },
+    "data/uspto_unique_templates.csv.gz": {
+      "sha256": "a4f1945e90cfa195538320833d68aed38f14e2fcc2f8afb5d958bc920edcafbe",
+      "bytes": 3313598
+    },
+    "data/uspto_filter_model.onnx": {
+      "sha256": "ad29aa32bdfcbe37065045546493806cf04899c55386c438905d83fb14bb6320",
+      "bytes": 16788859
+    },
+    "data/zinc_stock.hdf5": {
+      "sha256": "99d39a6f807c3e815487500bafc2b4a9dc66a31af189e3b1776874fb0d4a188d",
+      "bytes": 663232280
+    }
+  },
+  "command": "aizynthcli --config config-course.yml --smiles target.smi --policy uspto --filter uspto --stocks zinc --output routes.json",
+  "exit_code": 0,
+  "search_time_seconds": 3.3239629269,
+  "is_solved": true,
+  "number_of_solved_routes": 23
+}

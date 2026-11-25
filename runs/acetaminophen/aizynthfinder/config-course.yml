@@ -1,0 +1,8 @@
+expansion:
+  uspto:
+    - data/uspto_model.onnx
+    - data/uspto_unique_templates.csv.gz
+filter:
+  uspto: data/uspto_filter_model.onnx
+stock:
+  zinc: data/zinc_stock.hdf5

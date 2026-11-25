@@ -1,0 +1,22 @@
+format_version: synthex-config-1.0
+profile: manuscript
+llm:
+  provider: openai-compatible
+  model: solar-pro4
+  use_vertex_ai: false
+  timeout_seconds: 240
+  max_attempts: 2
+agents:
+  strategy_count: 2
+  route_step_limit: 12
+  route_proposal_attempts: 2
+  edit_iteration_limit: 2
+  editor_turn_limit: 20
+  strategy_temperature: 0.1
+  route_temperature: 0.2
+  critic_temperature: 0.1
+  editor_temperature: 0.2
+  analyst_temperature: 0.2
+completion:
+  enabled: false
+external_asset_manifest: null

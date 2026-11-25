@@ -1,0 +1,157 @@
+{
+  "format_version": "run-manifest-1.0",
+  "run_id": "d7365fa0ddc4b75e",
+  "target": "CC(=O)Nc1ccc(O)cc1",
+  "target_id": "acetaminophen",
+  "constraint": null,
+  "input_sha256": "02b2adba4c120ce80c4453d1989f1bde1376c4075a420e81cf7959a904178f4f",
+  "config": {
+    "format_version": "synthex-config-1.0",
+    "profile": "manuscript",
+    "llm": {
+      "provider": "openai-compatible",
+      "model": "solar-pro4",
+      "use_vertex_ai": false,
+      "timeout_seconds": 240.0,
+      "max_attempts": 2,
+      "thinking_level": null
+    },
+    "agents": {
+      "strategy_count": 2,
+      "route_step_limit": 12,
+      "route_proposal_attempts": 2,
+      "edit_iteration_limit": 2,
+      "editor_turn_limit": 20,
+      "strategy_temperature": 0.1,
+      "route_temperature": 0.2,
+      "critic_temperature": 0.1,
+      "editor_temperature": 0.2,
+      "analyst_temperature": 0.2,
+      "strategy_thinking_level": null,
+      "route_thinking_level": "medium",
+      "critic_thinking_level": "medium",
+      "editor_thinking_level": "medium",
+      "analyst_thinking_level": null
+    },
+    "completion": {
+      "enabled": false,
+      "aizynthfinder_config": null,
+      "stocks": null,
+      "expansion_policies": null,
+      "filter_policies": null,
+      "budget": {
+        "max_transforms": 6,
+        "iteration_limit": 500,
+        "time_limit": 1200,
+        "return_first": true
+      }
+    },
+    "external_asset_manifest": null
+  },
+  "config_sha256": "62665156ecf553743903d3c55af8c341e0e98889223d4654b9c9b5a3af70a44c",
+  "code_revision": "e4ff392ef0e9bdd58799922444901d6e76e5e6fd+dirty",
+  "dependency_versions": {
+    "synthex": "0.1.0",
+    "aizynthfinder": "4.4.1",
+    "google-genai": "1.75.0",
+    "pydantic": "2.14.3",
+    "rdkit": "2023.9.6"
+  },
+  "dependency_lock_sha256": "18cfbdff277ea7ec6b65132f77c1370c345873d0ae5aace7444e562e9c900f8b",
+  "provider": "openai-compatible",
+  "model": "solar-pro4",
+  "prompt_versions": {
+    "strategy_generator": "strategy-generator-v1",
+    "route_builder": "route-builder-reactionjson-v2",
+    "critic": "critic-v2-atom-accounting",
+    "editor": "editor-v1",
+    "analyst": "analyst-v1"
+  },
+  "prompt_sha256": {
+    "strategy_generator": "1357100a1e2e13cf8c98c2388c213c061384573e9dec13c2a7a60c56c45226fb",
+    "route_builder": "71395d2ae33f8170627c26bb3f2e20edd37ae3ada2b6a47a7a1b06937ca4c76f",
+    "critic": "d9427d05be57c3d5649c811f0a4be0ad64de683985be7865c16fca6b675c4089",
+    "editor": "42cab75931032edd136585c4d6f4efa56f259a40045154143bf16c6cfbd284ed",
+    "analyst": "d0b8323c1bdffbe0ee6a2cc28cd0a984ec20b127e5c296bdaea6d53c683e871f"
+  },
+  "external_assets": {},
+  "stage_configs": {
+    "strategies": {
+      "format_version": "synthex-config-1.0",
+      "profile": "manuscript",
+      "llm": {
+        "provider": "openai-compatible",
+        "model": "solar-pro4",
+        "use_vertex_ai": false,
+        "timeout_seconds": 240.0,
+        "max_attempts": 2,
+        "thinking_level": null
+      },
+      "agents": {
+        "strategy_count": 2,
+        "route_step_limit": 12,
+        "route_proposal_attempts": 2,
+        "edit_iteration_limit": 2,
+        "editor_turn_limit": 20,
+        "strategy_temperature": 0.1,
+        "route_temperature": 0.2,
+        "critic_temperature": 0.1,
+        "editor_temperature": 0.2,
+        "analyst_temperature": 0.2,
+        "strategy_thinking_level": null,
+        "route_thinking_level": "medium",
+        "critic_thinking_level": "medium",
+        "editor_thinking_level": "medium",
+        "analyst_thinking_level": null
+      },
+      "completion": {
+        "enabled": false,
+        "aizynthfinder_config": null,
+        "stocks": null,
+        "expansion_policies": null,
+        "filter_policies": null,
+        "budget": {
+          "max_transforms": 6,
+          "iteration_limit": 500,
+          "time_limit": 1200,
+          "return_first": true
+        }
+      },
+      "external_asset_manifest": null
+    }
+  },
+  "stage_config_sha256": {
+    "strategies": "62665156ecf553743903d3c55af8c341e0e98889223d4654b9c9b5a3af70a44c"
+  },
+  "llm_usage": {
+    "calls": 6,
+    "input_tokens": 12489,
+    "cached_input_tokens": 0,
+    "output_tokens": 1430,
+    "thought_tokens": 0,
+    "total_tokens": 13919
+  },
+  "stage_durations_seconds": {
+    "strategies": 2.290875,
+    "routes": 23.394245
+  },
+  "status": "failed",
+  "current_stage": "routes",
+  "completed_stages": [
+    "strategies"
+  ],
+  "artifacts": {
+    "strategies": {
+      "path": "strategies.json",
+      "sha256": "62cfb61b2c344b94c6b349d37c8c3552a19963e2d06a654ee0484ac681c3d31a",
+      "parent_sha256": null
+    }
+  },
+  "failure": {
+    "stage": "routes",
+    "category": "ValueError",
+    "message": "every item in stage 'routes' failed; first failure was ValueError: Route Builder exhausted 2 proposals for step 2: ValueError: step S2: execute_ops failed: Op [0] break_bond: ValueError: no bond exists between atoms 1 and 7\n  op_dict: {'op': 'break_bond', 'map_a': 2, 'map_b': 8}"
+  },
+  "created_at": "2026-11-24T10:21:11.459036+00:00",
+  "updated_at": "2026-11-24T10:21:37.170612+00:00"
+}

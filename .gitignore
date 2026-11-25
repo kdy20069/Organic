@@ -1,0 +1,78 @@
+# .gitignore (Organic 프로젝트 루트용)
+# 민감/환경 파일
+.env
+.env.*
+.env.local
+opencode.json
+!.env.example
+
+# 파이썬 캐시/컴파일
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.installed.cfg
+*.egg
+
+# OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# 빌드/배포 산출물
+build/
+dist/
+sdist/
+wheels/
+*.manifest
+*.spec
+
+# 캐시/테스트 커버리지
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+.tox/
+nosetests.xml
+coverage.xml
+htmlcov/
+
+# 임시/로그
+tmp/
+temp/
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+nohup.out
+
+# 진행 중 임시 프로빙 스크립트(보고서 렌더링 진단용)
+report/probe_build_docx.py
+report/probe_build_docx2.py
+report/probe_build_docx_final.py
+
+# 로컬에 클론해 둔 외부 모델 저장소 전체(업로드 제외)
+skill/context_recommender/
+skill/Parrot/
+skill/drfp/
+skill/synthex/
+skill/rxn_yields/
+skill/aizynthfinder/
+
+# 로컬 예시 실행 기록 중 업로드 대상이 아닌 대용량 데이터(선택)
+skill/context_recommender/app/resources/models/context/v2.tar.gz
+skill/context_recommender/app/resources/models/context/v2/**/*.hdf5
+skill/context_recommender/app/resources/models/context/v2/**/variables.data-*
+skill/Parrot/dataset/source_dataset/*.zip
+skill/Parrot/dataset/source_dataset/*.csv
+skill/Parrot/dataset/source_dataset/*.pkl
+skill/Parrot/outputs/*.zip
+skill/Parrot/outputs/*.pt
+skill/Parrot/outputs/**/optimizer.pt
+skill/drfp/data/tpl.csv
+skill/rxn_yields/.git/objects/pack/*.pack
+
+# 국소 예시 3D 보조 SDF(보고서 근거, 포함)
+# runs/acetaminophen/bonus/3d_structures/*.sdf
