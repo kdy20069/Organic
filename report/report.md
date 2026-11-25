@@ -7,6 +7,10 @@
 
 ---
 
+## 요약
+
+AiZynthFinder 4.4.1은 아세트산 무수물과 p-아미노페놀의 1단계 경로를 최상위 해결책으로 도출했고, SynthEx(Solar Pro 4)는 전략 2건을 생성한 뒤 경로 구축(`routes`) 단계에서 `ValueError`로 실패해 경로를 제공하지 못했다. ASKCOS v2 FP의 1순위는 무용매 43.65 °C(316.80 K)이며 2순위는 물이 포함돼 아세트산 무수물 가수분해 충돌이 확인됐고, Parrot은 온도를 예측하지 않고 용매 중심 15개 후보를 제시했다. Yield-BERT와 DRFP는 Buchwald–Hartwig 학습 범위 밖으로 적용 불가(`null`) 판정했으며, 가산점 분석으로 EPI Suite 물성·상태 비교, MOPAC O–H pKa, RDKit 2D 이미지, Discovery Studio 3D CPK 관찰을 함께 수행했다.
+
 ## 1. 물질 선정 이유
 
 아세트아미노펜은 대표적인 해열·진통제 성분이며, p-아미노페놀과 아세트산 무수물의 단순 1단계 아실화(아세틸화)로 합성할 수 있어 유기합성 수업 프로젝트의 예시로 적합하다. 역합성 오픈소스 도구(AiZynthFinder)와 LLM 기반 경로 도구(SynthEx), 조건 추천 모델(ASKCOS v2 FP, Parrot), 수율 모델(Yield-BERT, DRFP), 그리고 물성·양자화학 가산점 분석(EPI Suite, MOPAC, 2D 구조 이미지)을 한 분자에서 함께 적용하고 기록해 보는 것이 본 프로젝트의 목적이다. SMILES는 제공받은 자료를 RDKit 기준으로 확인한 `CC(=O)Nc1ccc(O)cc1`을 사용했고, 원본 한 줄 파일 `target.smi`에 저장했다.
@@ -286,3 +290,14 @@ AiZynthFinder는 아세트아미노펜을 1단계 역합성으로 해결했고, 
 **원응답 보존 원칙:** 모든 모델 원시 출력(JSON/CSV/log)은 변경하지 않고 그대로 보관했으며, 본문의 표와 서술은 그 요약·해석이다. 모델 score는 수율·확률이 아니며, 수율 모델 값은 생성하지 않았다.
 
 **문서 버전 및 렌더링:** 이 보고서는 원본 텍스트 마크다운에서 렌더링했고, 최종 결과물은 `report/`에 저장했다.
+
+### 사용한 모델과 저장소
+
+| 역할 | 모델 | 저장소 | 버전·설정 | 실행 |
+|---|---|---|---|---|
+| 합성 경로 | AiZynthFinder | https://github.com/MolecularAI/aizynthfinder | 4.4.1, USPTO 정책·필터, ZINC 스톡 | 실행(해결) |
+| 합성 경로 | SynthEx | https://github.com/schwallergroup/synthex/tree/submission | submission 브랜치, Solar Pro 4 | 실행(경로 단계 실패) |
+| 합성 조건 | ASKCOS context_recommender | https://gitlab.com/mlpds_mit/askcosv2/context_recommender | v2 FP, Docker(ARM64 임시 빌드), 후보 3개 | 실행 |
+| 합성 조건 | Parrot | https://github.com/wangxr0526/Parrot | USPTO 체크포인트, CPU 추론, 온도 미예측 | 실행 |
+| 산출율(수율) | Yield-BERT (rxn_yields) | https://github.com/rxn4chemistry/rxn_yields | Buchwald–Hartwig FullCV_01 체크포인트 | 적용 불가(미실행) |
+| 산출율(수율) | DRFP | https://github.com/reymond-group/drfp | Buchwald–Hartwig XGBoost 번들 모델 | 적용 불가(미실행) |

@@ -14,7 +14,6 @@ import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
-from xml.sax.saxutils import escape as xml_escape
 
 SOURCE_MD = sys.argv[1] if len(sys.argv) > 1 else ""
 DEST_PDF = sys.argv[2] if len(sys.argv) > 2 else ""
@@ -25,11 +24,11 @@ if not SOURCE_MD or not DEST_PDF:
     sys.exit(2)
 
 SOURCE_DIR = os.path.dirname(os.path.abspath(SOURCE_MD))
-RESOURCE_ROOT = os.path.dirname(SOURCE_DIR)
+RESOURCE_DIR = SOURCE_DIR
 def _resolve_image(path):
     if os.path.isabs(path):
         return path
-    return os.path.normpath(os.path.join(RESOURCE_ROOT, path))
+    return os.path.normpath(os.path.join(RESOURCE_DIR, path))
 
 
 def cmd_exists(name):
@@ -58,23 +57,11 @@ def _md_to_text_plain(s):
 def _md_to_text_plain_for_pdf(s):
     s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)
     s = re.sub(r"`([^`]+)`", r"\1", s)
-    return _xml_escape_for_pdf(s)
-
-
-def _xml_escape_for_docx(s):
-    s = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    return s
-
-
-def _xml_escape_for_pdf(s):
-    s = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)
-    s = re.sub(r"`([^`]+)`", r"\1", s)
     return s
 
 
 def pandoc_to_docx(src_md, dst_docx):
-    cmd = ["pandoc", "--from=gfm", "--resource-path", RESOURCE_DIR, src_md, "--output", dst_docx]
+    cmd = ["pandoc", "--from=gfm", "--resource-path", SOURCE_DIR, src_md, "--output", dst_docx]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0 or not os.path.exists(dst_docx) or os.path.getsize(dst_docx) == 0:
         raise RuntimeError("pandoc 실패: " + r.stderr[-1000:])
@@ -149,10 +136,6 @@ def build_docx_python(src_md, dst_docx):
         if all(ch in "-_= " for ch in stripped) and len(stripped) >= 3:
             return True
         return False
-
-    def _fix_xml_text_nodes(data):
-        # 더 이상 사용하지 않음: python-docx 자체 직렬화/이스케이프에 의존
-        return data
 
     def _flush_table_buf(lines):
         data_lines = [l for l in lines if l.strip().startswith("|")]
@@ -326,6 +309,8 @@ def build_pdf_reportlab(src_md, dst_pdf):
     if not font_registered:
         print("DEBUG: 등록된 한글 폰트 없음 -> Helvetica로 PDF 생성", file=sys.stderr)
 
+    RESOURCE_DIR = SOURCE_DIR
+
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="Caption", fontName=font_family, fontSize=9, leading=11, alignment=TA_CENTER))
     styles.add(ParagraphStyle(name="Cell", fontName=font_family, fontSize=7.5, leading=9.5))
@@ -356,7 +341,7 @@ def build_pdf_reportlab(src_md, dst_pdf):
         return Paragraph(_md_to_text_plain_for_pdf(text).replace("\n", "<br/>"), styles["Cell"])
 
     def _img_stream(path, width_mm=95):
-        full = _resolve_image(path)
+        full = os.path.normpath(os.path.join(SOURCE_DIR, path))
         if not os.path.exists(full):
             return Paragraph("[이미지 없음: %s]" % os.path.basename(path), styles["Body"])
         from reportlab.lib.utils import ImageReader

@@ -64,12 +64,13 @@ Final reports are generated only from raw run records — not from reproduced or
 
 Save the final file under `report/` as DOCX or PDF, no more than 20 pages. Include:
 
+- A short executive summary of 3–4 sentences directly before Chapter 1 (`## 요약`), placed immediately after the metadata block and before the first content section. The summary must reflect only the actual run record: which models ran, which failed, which were out of domain, and the key numeric findings. Do not add new numbers or reinterpret failures in the summary.
 - Why the molecule was selected.
 - The chosen synthesis route and each step's forward reaction, condition candidates, yield result or applicability decision, and an integrated conclusion.
 - Model performance and limitations, including exact failures, component conflicts, out-of-domain yield models, and relevant runtime/build issues evidenced by logs.
 - RDKit 2D structure images for target and key intermediates/reactants, plus a 2D forward-reaction scheme embedded in the report.
 - Bonus sections for EPI Suite phase comparison, MOPAC charge/pKa calculations, and 3D accessibility; mark an analysis not performed when its result is absent.
-- A short reproducibility section with software/model versions and links to raw files or appendices.
+- Chapter 10 (재현성 정보) must include a single “사용한 모델과 저장소” summary table with exactly five columns: `역할 | 모델 | 저장소 | 버전·설정 | 실행`. Each row must state the model role, model name, official repository URL (no local or personal paths), version/checkpoint/configuration, and execution status (실행/실행(실패)/적용 불가(미실행) 등). The header pipe count and separator pipe count must match exactly (for 5 columns, `|---|---|---|---|---|`). This table replaces any long free-form list of the same information in Chapter 10.
 
 Use the repository’s single CLI rendering script for final deliverables. The canonical script is `scripts/export_report_local.py`; keep `scripts/export_report.sh` and any duplicated `render_report.py`/`build_pdf.py` copies out of the active pipeline. The CLI form is:
 
@@ -78,7 +79,7 @@ python3 scripts/export_report_local.py SOURCE.md DEST.pdf [DEST.docx]
 ```
 
 - SOURCE.md is the Markdown source on disk; DEST.pdf is the required PDF; optional DEST.docx is created when provided.
-- The script accepts only CLI arguments; do not hardcode personal paths like `/Users/kdy20069/...` in the script or in reports. Image, font, and model asset paths are resolved relative to the Markdown source directory or through the run manifest.
+- The script accepts only CLI arguments; do not hardcode personal paths like `/Users/<user>/...` in the script or in reports. Image, font, and model asset paths are resolved relative to the Markdown source directory or through the run manifest.
 - When pandoc is available, the script builds DOCX with pandoc and converts to PDF with LibreOffice (soffice/libreoffice). When pandoc is absent, it builds DOCX directly with python-docx. When neither LibreOffice nor pandoc is available, it renders PDF directly with ReportLab.
 - 한글 PDF 렌더링은 스크립트 실행 시 실제 시스템에 존재하는 한글 지원 TTF/TTC를 자동 탐색해 등록한다(예: macOS의 AppleSDGothicNeo/AppleGothic/NanumGothic 등). 반지름이 같은 폰트 묶음(ttc)은 스크립트에서 지원되는 첫 글리프를 사용한다. 렌더링 후에도 한글 깨짐(■ 등)이 없어야 하며, PDF 텍스트 추출 시 마크다운 원문과 대응되는 한글이 확인되어야 한다.
 - 표 처리 규칙:
